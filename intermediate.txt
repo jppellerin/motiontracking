@@ -1,0 +1,70 @@
+http://www.moosechips.com/2008/08/opencv-corner-detection-using-cvgoodfeaturestotrack/
+
+
+
+IplImage * hsvImage = cvCreateImage(cvSize(imgOriginal->width,imgOriginal->height),imgOriginal->depth,3);
+	IplImage * rgbImage = cvCreateImage(cvSize(imgOriginal->width,imgOriginal->height),imgOriginal->depth,3);
+	IplImage * greyImage = cvCreateImage(cvSize(imgOriginal->width,imgOriginal->height),imgOriginal->depth,1);
+	
+	CvScalar emptyScalar = cvScalar(0);
+
+	cvCvtColor(imgOriginal, hsvImage, CV_RGB2HSV);
+
+	//Detect yellow object.
+	for(int i=0; i<hsvImage->width; i++) {
+		for(int j=0; j<hsvImage->height; j++) {
+			CvScalar currentScalar = cvGet2D(hsvImage, j, i);
+			//Thanks to : François Chateauvert for values.
+			if(currentScalar.val[0] > 90 && currentScalar.val[0] < 110 && currentScalar.val[1] > 125 && currentScalar.val[2] > 135) {
+				//set pixel in ouptut
+			} else {
+				//set empty
+				cvSet2D(hsvImage, j, i, emptyScalar);
+			}
+		}
+	}
+	
+	//prepare variables used to track features
+
+	//Get hsv image to grey scale
+	cvCvtColor(hsvImage, rgbImage, CV_HSV2RGB);
+	cvCvtColor(rgbImage, greyImage, CV_RGB2GRAY);
+
+	//initialise variables
+	IplImage * eig_image = cvCreateImage(cvSize(imgOriginal->width,imgOriginal->height),imgOriginal->depth,1);
+	IplImage * temp_image = cvCreateImage(cvSize(imgOriginal->width,imgOriginal->height),imgOriginal->depth,1);
+	const int MAX_CORNERS = 100;
+	CvPoint2D32f corners[MAX_CORNERS] = {0};
+	int corner_count = MAX_CORNERS;
+	double quality_level = 0.1;
+	double min_distance = 5;
+	int eig_block_size = 3;
+	int use_harris = false;
+
+	//track features
+	cvGoodFeaturesToTrack(greyImage, eig_image, temp_image, corners, &corner_count, quality_level, min_distance, NULL, eig_block_size, use_harris);
+
+	//Draw circles found in above method
+	//find max top left and min bottom right
+	CvPoint topLeft = cvPoint(0,0);
+	CvPoint bottomRight = cvPoint(0,0);
+
+	topLeft = cvPoint((int)corners[0].x, (int)corners[0].y);
+	bottomRight = cvPoint((int)corners[0].x, (int)corners[0].y);
+	for( int i = 0; i < corner_count; i++) {
+
+		int radius = 2;
+		cvCircle(imgOriginal, cvPoint((int)(corners[i].x + 0.5f),(int)(corners[i].y + 0.5f)), radius, cvScalar(0,0,255) );
+	}
+
+
+
+	//cvCvtColor(hsvImage, outputImage, CV_HSV2RGB);
+
+	showImage("Processed Hue", imgOriginal);
+
+	//Release image spaces created
+	cvReleaseImage(&hsvImage);
+	//cvReleaseImage(&outputImage);
+
+	//</Student's Code>
